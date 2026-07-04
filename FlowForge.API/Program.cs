@@ -1,7 +1,10 @@
+using FlowForge.API.Extensions;
+using FlowForge.Application.Common.Behaviors;
 using FlowForge.Application.Common.Interfaces;
 using FlowForge.Application.Features.Auth.Register;
 using FlowForge.Infrastructure.Auth;
 using FlowForge.Infrastructure.Persistence;
+using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -19,8 +22,7 @@ public class Program
 
         // Controllers
         builder.Services.AddControllers();
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();   
+        builder.Services.AddSwaggerDocumentation();
 
         // Database
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -36,7 +38,8 @@ public class Program
         // Auth Services
         builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
         builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-
+        builder.Services.AddValidatorsFromAssembly(typeof(RegisterCommand).Assembly);
+        builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         // JWT Authentication
         var jwtSecret = builder.Configuration["Jwt:Secret"]!;
         builder.Services.AddAuthentication(options =>
@@ -64,8 +67,7 @@ public class Program
 
         if (app.Environment.IsDevelopment())
         {
-            app.UseSwagger();
-            app.UseSwaggerUI();
+            app.UseSwaggerDocumentation();
         }
 
         app.UseHttpsRedirection();
